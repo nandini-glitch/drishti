@@ -120,3 +120,14 @@ def run_simulation():
     except subprocess.CalledProcessError as e:
         raise HTTPException(status_code=500, detail=f"Simulation failed: {e.stderr}")
 
+@router.post("/sync-live")
+def sync_live():
+    from src.routes.ingest import ingest_poll
+    try:
+        secret = os.environ.get("INGEST_SECRET", "df6d782e5781041d55a476ccd1b0951e")
+        result = ingest_poll(x_ingest_secret=secret)
+        return {"status": "success", "poll_result": result}
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))

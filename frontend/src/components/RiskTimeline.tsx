@@ -8,6 +8,28 @@ import { useRiskHistory } from "../hooks/useRiskHistory";
 export default function RiskTimeline({ isOpen, onClose }: { isOpen: boolean, onClose: () => void }) {
   const { data: history, metadata, loading, loadMore } = useRiskHistory("hormuz");
   const [simulating, setSimulating] = useState(false);
+  const [syncing, setSyncing] = useState(false);
+
+  const handleSyncLive = async () => {
+    setSyncing(true);
+    try {
+      const res = await fetch((process.env.NEXT_PUBLIC_API_URL || "https://drishti-on9a.onrender.com") + "/sync-live", {
+        method: "POST"
+      });
+      if (res.ok) {
+        setTimeout(() => {
+          alert("Live Sync Complete! Real-world headlines processed. Close the timeline and click 'Refresh Signals'.");
+        }, 500);
+      } else {
+        alert("Failed to sync live data.");
+      }
+    } catch (e) {
+      console.error(e);
+      alert("Error syncing live data.");
+    } finally {
+      setSyncing(false);
+    }
+  };
 
   const handleRunSimulation = async () => {
     setSimulating(true);
@@ -64,10 +86,25 @@ export default function RiskTimeline({ isOpen, onClose }: { isOpen: boolean, onC
               </button>
             </div>
 
-            <div style={{ padding: '1.5rem', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
+            <div style={{ padding: '1.5rem', borderBottom: '1px solid rgba(255,255,255,0.1)', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              <button 
+                onClick={handleSyncLive} 
+                disabled={syncing || simulating}
+                style={{ 
+                  width: '100%', padding: '0.75rem', borderRadius: '8px', 
+                  background: 'var(--md-sys-color-primary)', color: '#000', 
+                  border: 'none', fontWeight: 600, fontSize: '1rem',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem',
+                  cursor: (syncing || simulating) ? 'not-allowed' : 'pointer',
+                  opacity: (syncing || simulating) ? 0.7 : 1
+                }}
+              >
+                <Activity size={18} /> {syncing ? "Fetching Real-World Data..." : "Sync Live Intelligence"}
+              </button>
+
               <button 
                 onClick={handleRunSimulation} 
-                disabled={simulating}
+                disabled={simulating || syncing}
                 style={{ 
                   width: '100%', padding: '0.75rem', borderRadius: '8px', 
                   background: 'var(--md-sys-color-error)', color: '#fff', 
