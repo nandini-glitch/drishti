@@ -48,8 +48,9 @@ def trigger_crisis():
     print("🧠 Waking up Gemini AI Ingestion Engine to process the event...")
     
     import urllib.request
+    port = os.environ.get("PORT", "8080")
     req = urllib.request.Request(
-        'http://127.0.0.1:8080/ingest/poll',
+        f'http://127.0.0.1:{port}/ingest/poll',
         data=b'',
         headers={'X-Ingest-Secret': os.environ.get("INGEST_SECRET", "df6d782e5781041d55a476ccd1b0951e")}
     )
