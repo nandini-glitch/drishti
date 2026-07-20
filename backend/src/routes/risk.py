@@ -29,17 +29,35 @@ def get_risk_corridors():
 
 
 @router.get("/risk/history/{corridor_id}")
-def get_risk_history(corridor_id: str, limit: int = 50):
+def get_risk_history(corridor_id: str, page: int = 1, page_size: int = 50):
     db = get_db()
     corridor = db.table("corridors").select("*").eq("id", corridor_id).execute().data
     if not corridor:
         raise HTTPException(status_code=404, detail=f"Unknown corridor: {corridor_id}")
 
+    offset = (page - 1) * page_size
+    end = offset + page_size - 1
+
+    # Fetch exact count for pagination metadata
+    count_res = db.table("risk_snapshots").select("*", count="exact").eq("corridor_id", corridor_id).limit(1).execute()
+    total_count = getattr(count_res, 'count', 0) or 0
+
     history = (db.table("risk_snapshots")
                .select("*")
                .eq("corridor_id", corridor_id)
                .order("created_at", desc=True)
-               .limit(limit)
+               .range(offset, end)
                .execute().data)
 
-    return {"corridor_id": corridor_id, "history": history}
+    total_pages = (total_count + page_size - 1) // page_size if total_count > 0 else 1
+
+    return {
+        "corridor_id": corridor_id,
+        "metadata": {
+            "page": page,
+            "page_size": page_size,
+            "total_count": total_count,
+            "total_pages": total_pages
+        },
+        "history": history
+    }

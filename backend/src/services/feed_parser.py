@@ -1,11 +1,6 @@
-import feedparser
+import os
+import requests
 from src.config.db import get_db
-
-RSS_FEEDS = [
-    "http://feeds.reuters.com/Reuters/worldNews",
-    "https://www.aljazeera.com/xml/rss/all.xml",
-    "https://www.upstreamonline.com/rss",
-]
 
 CORRIDOR_KEYWORDS = {
     "hormuz": ["hormuz", "strait of hormuz"],
@@ -14,24 +9,40 @@ CORRIDOR_KEYWORDS = {
 }
 GENERAL_KEYWORDS = ["opec", "opec+", "crude oil", "oil tanker", "sanctions oil"]
 
-
 def fetch_candidate_entries() -> list[dict]:
-    """Fetch all configured RSS feeds, return raw entries (title, url, source, published)."""
-    entries = []
-    for feed_url in RSS_FEEDS:
-        try:
-            parsed = feedparser.parse(feed_url)
-            for entry in parsed.entries:
-                entries.append({
-                    "url": entry.get("link", ""),
-                    "title": entry.get("title", ""),
-                    "source": feed_url,
-                    "published_at": entry.get("published", None),
-                })
-        except Exception:
-            # A single feed failing shouldn't kill the whole poll cycle
-            continue
-    return entries
+    """Fetch global energy/shipping news using the Tinyfish AI API."""
+    api_key = os.environ.get("TINYFISH_API_KEY")
+    if not api_key:
+        print("WARNING: TINYFISH_API_KEY not found in environment.")
+        return []
+        
+    url = "https://api.tinyfish.ai/v1/news"
+    headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
+    
+    payload = {
+        "query": "oil tanker disruption OR suez OR hormuz OR bab-el-mandeb OR OPEC",
+        "limit": 50
+    }
+    
+    try:
+        resp = requests.post(url, json=payload, headers=headers, timeout=10)
+        if resp.status_code != 200:
+            print(f"Tinyfish API error: {resp.status_code} {resp.text}")
+            return []
+            
+        data = resp.json()
+        entries = []
+        for item in data.get("data", []):
+            entries.append({
+                "url": item.get("url", ""),
+                "title": item.get("title", ""),
+                "source": item.get("source", "tinyfish"),
+                "published_at": item.get("published_at", None),
+            })
+        return entries
+    except Exception as e:
+        print(f"Tinyfish request failed: {e}")
+        return []
 
 
 def match_corridor(title: str) -> str | None:

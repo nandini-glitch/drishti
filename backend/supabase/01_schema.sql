@@ -48,7 +48,9 @@ create table if not exists crude_assay_specs (
     source_name text not null,
     api_gravity double precision not null,
     sulfur_pct double precision not null,
-    estimated_replacement_arrival_days integer not null
+    estimated_replacement_arrival_days integer not null,
+    current_spot_price_usd double precision not null,
+    freight_cost_per_bbl double precision not null
 );
 
 create table if not exists sanctions_registry (

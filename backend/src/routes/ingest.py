@@ -34,8 +34,11 @@ def ingest_poll(x_ingest_secret: str | None = Header(default=None)):
     new_entries = feed_parser.dedup_against_db(relevant)
     inserted = feed_parser.insert_headlines(new_entries)
 
+    # Fetch ALL unprocessed headlines from the database (including our injected crisis)
+    unprocessed = db.table("headlines").select("*").eq("processed", False).execute().data
+
     processed_count = 0
-    for headline in inserted:
+    for headline in unprocessed:
         try:
             extraction = gemini_engine.extract_risk_signal(headline["title"])
         except Exception:

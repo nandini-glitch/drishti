@@ -55,6 +55,31 @@ def fuse_disruption_score(severity: float, sanctions_flag: float,
 
 # ---------- Pipeline 2: Scenario (corridor-level days_of_cover, per-refinery impact) ----------
 
+def compute_economic_impact(total_daily_shortfall_m3: float, unmitigated_gap_days: int, national_capacity_bpd: float = 5_000_000) -> dict:
+    """
+    Computes macroeconomic downstream impacts using elasticity approximations.
+    1 m3 = ~6.289 barrels.
+    """
+    total_shortfall_bbl = total_daily_shortfall_m3 * 6.289
+    baseline_daily_bbl = national_capacity_bpd
+    
+    # % shortfall of national capacity
+    shortfall_pct = min((total_shortfall_bbl / baseline_daily_bbl) * 100, 100) if baseline_daily_bbl > 0 else 0
+    
+    # Simple elasticity model: e = 2.0 (fuel price is highly inelastic to supply drops)
+    fuel_price_spike_pct = shortfall_pct * 2.0
+    
+    # GDP elasticity: a sustained 10% shock dragging for 30 days causes ~0.5% GDP hit.
+    # Formula: (shortfall_pct / 10) * (gap_days / 30) * 0.5
+    gdp_drag_pct = (shortfall_pct / 10.0) * (unmitigated_gap_days / 30.0) * 0.5
+    
+    return {
+        "shortfall_pct": round(shortfall_pct, 2),
+        "fuel_price_spike_pct": round(fuel_price_spike_pct, 2),
+        "gdp_drag_pct": round(gdp_drag_pct, 3)
+    }
+
+
 def compute_scenario(disruption_score: float, refinery_baselines: list[dict],
                       spr_current_inventory_m3: float) -> dict:
     """
@@ -97,10 +122,22 @@ def rank_substitutes(target_api: float, target_sulfur: float,
 
         if api_diff <= 3 and sulfur_diff <= 0.1:
             compatibility = "high"
+            chem_penalty = 0
         elif api_diff <= 6 and sulfur_diff <= 0.3:
             compatibility = "moderate"
+            chem_penalty = 5
         else:
             compatibility = "low"
+            chem_penalty = 20
+
+        # Optimize for lowest total cost and fastest arrival, while matching chemistry.
+        # $1 cost = 1 point penalty; 1 day delay = 0.5 point penalty
+        spot_price = source.get("current_spot_price_usd", 80.0)
+        freight = source.get("freight_cost_per_bbl", 3.0)
+        days = source.get("estimated_replacement_arrival_days", 20)
+        
+        total_cost = spot_price + freight
+        score = total_cost + (days * 0.5) + chem_penalty
 
         ranked.append({
             "source_id": source["id"],
@@ -108,8 +145,11 @@ def rank_substitutes(target_api: float, target_sulfur: float,
             "compatibility": compatibility,
             "api_gravity": source["api_gravity"],
             "sulfur_pct": source["sulfur_pct"],
-            "estimated_replacement_arrival_days": source["estimated_replacement_arrival_days"],
-            "_sort_key": api_diff + sulfur_diff,
+            "estimated_replacement_arrival_days": days,
+            "current_spot_price_usd": spot_price,
+            "freight_cost_per_bbl": freight,
+            "procurement_score": round(score, 2),
+            "_sort_key": score,
         })
 
     ranked.sort(key=lambda x: x["_sort_key"])
@@ -139,15 +179,28 @@ def compute_drawdown(refinery_impacts: list[dict], refinery_baselines_by_id: dic
     safety_floor_m3 = spr_current_inventory_m3 * safety_floor_pct
     available_for_drawdown = spr_current_inventory_m3 - safety_floor_m3
 
-    if total_shortfall > available_for_drawdown:
-        daily_drawdown_m3 = available_for_drawdown / gap_days if gap_days > 0 else 0
-        fully_covered = False
-    else:
-        daily_drawdown_m3 = total_daily_shortfall
-        fully_covered = True
+    drawdown_schedule = []
+    remaining_available = available_for_drawdown
+    
+    for day in range(1, gap_days + 1):
+        # Front-load the release: heavy on early days, tapering off.
+        taper_factor = 1.0 - (0.5 * (day - 1) / max(gap_days - 1, 1))
+        desired_drawdown = total_daily_shortfall * taper_factor
+        
+        actual_drawdown = min(desired_drawdown, remaining_available)
+        remaining_available -= actual_drawdown
+        
+        drawdown_schedule.append({
+            "day": day,
+            "volume_m3": round(actual_drawdown, 2)
+        })
+        
+    total_drawn = available_for_drawdown - remaining_available
+    fully_covered = total_drawn >= total_shortfall
 
     return {
-        "daily_drawdown_m3": round(daily_drawdown_m3, 2),
+        "total_drawn_m3": round(total_drawn, 2),
+        "schedule": drawdown_schedule,
         "gap_days": gap_days,
         "fully_covered": fully_covered,
         "safety_floor_m3": round(safety_floor_m3, 2),

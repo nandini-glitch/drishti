@@ -1,0 +1,334 @@
+.container {
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+  position: relative;
+}
+
+/* Header Navbar */
+.header {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  padding: 1rem 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 2rem;
+  z-index: 100;
+  background: rgba(15, 17, 21, 0.65);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.navLinks {
+  display: flex;
+  gap: 2rem;
+  align-items: center;
+}
+
+.navLink {
+  color: var(--md-sys-color-on-surface-variant);
+  font-weight: 500;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  transition: color 0.2s ease;
+  cursor: pointer;
+}
+
+.navLink:hover, .navLink.active {
+  color: var(--md-sys-color-primary);
+}
+
+.headerTitle {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.header h1 {
+  margin: 0;
+  font: var(--md-typescale-headline-large-font);
+  font-size: var(--md-typescale-headline-large-size);
+  font-weight: var(--md-typescale-headline-large-weight);
+  line-height: var(--md-typescale-headline-large-line-height);
+  color: var(--md-sys-color-on-background);
+}
+
+.header button {
+  padding: 0 1.5rem;
+  height: 40px;
+  background-color: transparent;
+  color: var(--md-sys-color-primary);
+  border: 1px solid var(--md-sys-color-primary);
+  border-radius: 100px;
+  cursor: pointer;
+  font-weight: 600;
+  backdrop-filter: blur(8px);
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.header button:hover:not(:disabled) {
+  background-color: var(--md-sys-color-primary-container);
+  border-color: var(--md-sys-color-primary);
+  color: #fff;
+  box-shadow: 0 0 15px var(--md-sys-color-primary-container);
+}
+
+.header button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Map Hero Section */
+.heroSection {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 1;
+}
+
+/* Grid Layout for Widgets */
+.contentGrid {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+  padding: 2rem;
+  z-index: 10;
+  pointer-events: none; /* Let clicks pass through empty space to the map */
+}
+
+/* We must re-enable pointer events on the cards themselves */
+.card {
+  pointer-events: auto;
+}
+
+@media (max-width: 1024px) {
+  .contentGrid {
+    grid-template-columns: 1fr;
+    margin-top: -2rem;
+  }
+}
+
+.column {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+/* Glassmorphic Card */
+.card {
+  padding: 1.5rem;
+}
+
+.cardHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 2rem;
+}
+
+.cardHeader h2 {
+  margin: 0;
+  font: var(--md-typescale-title-medium-font);
+  font-size: var(--md-typescale-title-medium-size);
+  font-weight: var(--md-typescale-title-medium-weight);
+  line-height: var(--md-typescale-title-medium-line-height);
+  letter-spacing: var(--md-typescale-title-medium-letter-spacing);
+  color: var(--md-sys-color-on-surface);
+}
+
+/* Cinematic MD3 Surface Container */
+.surfaceCard {
+  background: var(--md-sys-color-surface-container);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+  border-radius: 16px;
+}
+
+/* Wireframe Loader */
+.wireframeLoader {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  width: 100%;
+  padding: 2rem;
+}
+
+.skeletonLine {
+  height: 20px;
+  background: var(--md-sys-color-surface-variant);
+  border-radius: 8px;
+  position: relative;
+  overflow: hidden;
+}
+
+.skeletonLine::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(16, 185, 129, 0.2), transparent);
+  animation: scan 1.5s infinite linear;
+}
+
+@keyframes scan {
+  0% { left: -100%; }
+  100% { left: 200%; }
+}
+
+/* Stats / Macroeconomic Impact */
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 1rem;
+}
+
+.statBox {
+  background: transparent;
+  padding: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  border: none;
+}
+
+.statBox span {
+  font: var(--md-typescale-label-medium-font);
+  font-size: var(--md-typescale-label-medium-size);
+  font-weight: var(--md-typescale-label-medium-weight);
+  line-height: var(--md-typescale-label-medium-line-height);
+  letter-spacing: var(--md-typescale-label-medium-letter-spacing);
+  color: var(--md-sys-color-on-surface-variant);
+  margin-bottom: 0.5rem;
+  text-transform: uppercase;
+}
+
+.statBox strong {
+  font: var(--md-typescale-display-small-font);
+  font-size: var(--md-typescale-display-small-size);
+  font-weight: var(--md-typescale-display-small-weight);
+  line-height: var(--md-typescale-display-small-line-height);
+  color: var(--md-sys-color-primary);
+}
+
+/* Spike Indicator (Solid MD3 Error Color) */
+.spikeIndicator {
+  color: var(--md-sys-color-error) !important;
+}
+
+/* Grid Table Implementation */
+.gridTable {
+  display: flex;
+  flex-direction: column;
+}
+
+.gridRow {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1.5fr;
+  gap: 1rem;
+  padding: 0.5rem 0;
+}
+
+.gridHeader {
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+  margin-bottom: 0.5rem;
+}
+
+.gridHeader span {
+  color: var(--md-sys-color-on-surface-variant);
+  font: var(--md-typescale-label-medium-font);
+  font-size: var(--md-typescale-label-medium-size);
+  font-weight: var(--md-typescale-label-medium-weight);
+  line-height: var(--md-typescale-label-medium-line-height);
+  letter-spacing: var(--md-typescale-label-medium-letter-spacing);
+  text-transform: uppercase;
+}
+
+.gridCell {
+  color: var(--md-sys-color-on-surface);
+  font: var(--md-typescale-body-medium-font);
+  font-size: var(--md-typescale-body-medium-size);
+  font-weight: var(--md-typescale-body-medium-weight);
+  line-height: var(--md-typescale-body-medium-line-height);
+  letter-spacing: var(--md-typescale-body-medium-letter-spacing);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Schedule / Drawdown Bars */
+.schedule {
+  margin-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.scheduleBar {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.day {
+  width: 45px;
+  font-size: 0.875rem;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.barWrap {
+  flex-grow: 1;
+  background: var(--md-sys-color-surface-variant);
+  height: 6px;
+  border-radius: 3px;
+  overflow: hidden;
+  border: none;
+}
+
+.bar {
+  height: 100%;
+  background: var(--md-sys-color-primary);
+  border-radius: 3px;
+  transition: width 1s cubic-bezier(0.2, 0, 0, 1);
+}
+
+.vol {
+  width: 50px;
+  text-align: right;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #fff;
+}
+
+/* Error banner */
+.error {
+  background: var(--md-sys-color-error-container);
+  color: var(--md-sys-color-on-error-container);
+  padding: 1rem;
+  border-radius: 12px;
+  margin: 2rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  border: 1px solid var(--md-sys-color-error);
+  position: absolute;
+  top: 80px;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+}

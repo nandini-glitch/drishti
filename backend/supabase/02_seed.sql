@@ -26,11 +26,11 @@ insert into spr_inventory (current_inventory_m3, safety_floor_pct) values
 on conflict do nothing;
 
 -- CRUDE ASSAY SPECS (real published approximate values)
-insert into crude_assay_specs (id, source_name, api_gravity, sulfur_pct, estimated_replacement_arrival_days) values
-('bonny_light', 'Nigeria - Bonny Light', 35.0, 0.15, 18),
-('cabinda', 'Angola - Cabinda', 32.0, 0.17, 20),
-('wti', 'USA - WTI', 39.6, 0.24, 22),
-('urals', 'Russia - Urals', 31.0, 1.35, 25)
+insert into crude_assay_specs (id, source_name, api_gravity, sulfur_pct, estimated_replacement_arrival_days, current_spot_price_usd, freight_cost_per_bbl) values
+('bonny_light', 'Nigeria - Bonny Light', 35.0, 0.15, 18, 85.50, 2.50),
+('cabinda', 'Angola - Cabinda', 32.0, 0.17, 20, 84.00, 2.80),
+('wti', 'USA - WTI', 39.6, 0.24, 22, 82.00, 3.50),
+('urals', 'Russia - Urals', 31.0, 1.35, 25, 68.00, 4.00)
 on conflict (id) do nothing;
 
 -- SANCTIONS REGISTRY

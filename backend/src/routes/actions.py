@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from src.config.db import get_db
-from src.services.calculators import compute_scenario, rank_substitutes, compute_drawdown
+from src.services.calculators import compute_scenario, rank_substitutes, compute_drawdown, compute_economic_impact
 
 router = APIRouter()
 
@@ -43,7 +43,30 @@ def scenario_quick(req: CorridorRequest):
     baselines_raw, spr = _get_baselines_and_spr(db, req.corridor)
 
     result = compute_scenario(score, baselines_raw, spr["current_inventory_m3"])
-    return {"corridor": req.corridor, "disruption_score": score, **result}
+    
+    total_shortfall_m3 = 0.0
+    for b in baselines_raw:
+        supply_loss_fraction = score * b["max_disruption_fraction"]
+        total_shortfall_m3 += b["daily_demand_m3"] * supply_loss_fraction
+        
+    all_refineries = db.table("refineries").select("capacity_bpd").execute().data
+    national_capacity_bpd = sum((r.get("capacity_bpd") or 0) for r in all_refineries)
+    # Fallback in case DB is empty
+    if national_capacity_bpd == 0:
+        national_capacity_bpd = 5_000_000
+        
+    economic_impact = compute_economic_impact(
+        total_shortfall_m3, 
+        unmitigated_gap_days=30, 
+        national_capacity_bpd=national_capacity_bpd
+    )
+    
+    return {
+        "corridor": req.corridor, 
+        "disruption_score": score, 
+        **result,
+        "economic_impact_30_days": economic_impact
+    }
 
 
 @router.post("/procurement/quick")

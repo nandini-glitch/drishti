@@ -1,0 +1,215 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Activity, ShieldAlert, Zap, Globe, RefreshCcw, TrendingUp } from "lucide-react";
+import styles from "./Dashboard.module.css";
+import MapWrapper from "../components/MapWrapper";
+
+const WireframeLoader = () => (
+  <div className={styles.wireframeLoader}>
+    <div className={styles.skeletonLine} style={{ width: '40%' }}></div>
+    <div className={styles.skeletonLine} style={{ width: '100%', height: '60px' }}></div>
+    <div className={styles.skeletonLine} style={{ width: '80%' }}></div>
+    <div className={styles.skeletonLine} style={{ width: '60%' }}></div>
+  </div>
+);
+
+export default function Dashboard() {
+  const [scenarioData, setScenarioData] = useState<any>(null);
+  const [procurementData, setProcurementData] = useState<any>(null);
+  const [reserveData, setReserveData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  const corridor = "hormuz";
+  const API_BASE = "http://127.0.0.1:8080";
+
+  const fetchDashboardData = async () => {
+    setLoading(true);
+    setError("");
+    try {
+      const headers = { "Content-Type": "application/json" };
+      const body = JSON.stringify({ corridor });
+
+      const [scenRes, procRes, resRes] = await Promise.all([
+        fetch(`${API_BASE}/scenario/quick`, { method: "POST", headers, body }),
+        fetch(`${API_BASE}/procurement/quick`, { method: "POST", headers, body }),
+        fetch(`${API_BASE}/reserve?corridor=${corridor}`)
+      ]);
+
+      if (!scenRes.ok || !procRes.ok || !resRes.ok) {
+        throw new Error("Failed to fetch data from backend. Is it running?");
+      }
+
+      setScenarioData(await scenRes.json());
+      setProcurementData(await procRes.json());
+      setReserveData(await resRes.json());
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchDashboardData();
+  }, []);
+
+  const disruptionScore = scenarioData ? (scenarioData.disruption_score * 100).toFixed(1) : 0;
+  const isCrisis = scenarioData && scenarioData.disruption_score > 0.3;
+
+  return (
+    <div className={styles.container}>
+      {error && (
+        <motion.div initial={{ y: -50, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className={styles.error}>
+          <ShieldAlert size={24} /> {error}
+        </motion.div>
+      )}
+
+      {/* Header Navbar */}
+      <header className={styles.header}>
+        <div className={styles.headerTitle}>
+          <Globe className={isCrisis ? styles.spikeIndicator : ""} size={28} color={isCrisis ? "var(--md-sys-color-error)" : "var(--md-sys-color-primary)"} />
+          <h1>Drishti</h1>
+        </div>
+        
+        <nav className={styles.navLinks}>
+          <span className={`${styles.navLink} ${styles.active}`}>Live Operations</span>
+          <span className={styles.navLink}>Corridor Network</span>
+          <span className={styles.navLink}>Procurement AI</span>
+          <span className={styles.navLink}>Settings</span>
+        </nav>
+        <button onClick={fetchDashboardData} disabled={loading}>
+          <RefreshCcw size={18} className={loading ? "animate-spin" : ""} />
+          {loading ? "Analyzing..." : "Refresh Signals"}
+        </button>
+      </header>
+
+      {/* Hero Map Section */}
+      <div className={styles.heroSection}>
+        <MapWrapper />
+      </div>
+
+      {/* Content Grid */}
+      <div className={styles.contentGrid}>
+        
+        {/* 1: Macro Impact */}
+        <motion.div 
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.1 }}
+            className={`${styles.surfaceCard} ${styles.card}`}
+          >
+            <div className={styles.cardHeader}>
+              <Activity size={20} color="var(--md-sys-color-primary)" />
+              <h2>Macroeconomic Impact</h2>
+            </div>
+            
+            {loading && !scenarioData ? <WireframeLoader /> : (
+              <div className={styles.stats} style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', gap: '1rem' }}>
+                <div className={styles.statBox} style={{ flex: 1 }}>
+                  <span style={{ whiteSpace: 'nowrap' }}>Disruption Score</span>
+                  <strong className={isCrisis ? styles.spikeIndicator : ""}>{disruptionScore}%</strong>
+                </div>
+                <div className={styles.statBox} style={{ flex: 1 }}>
+                  <span style={{ whiteSpace: 'nowrap' }}>Fuel Price Spike</span>
+                  <strong className={isCrisis ? styles.spikeIndicator : ""}>
+                    +{scenarioData?.economic_impact_30_days?.fuel_price_spike_pct}%
+                  </strong>
+                </div>
+                <div className={styles.statBox} style={{ flex: 1 }}>
+                  <span style={{ whiteSpace: 'nowrap' }}>GDP Drag (30d)</span>
+                  <strong className={styles.danger}>
+                    -{scenarioData?.economic_impact_30_days?.gdp_drag_pct}%
+                  </strong>
+                </div>
+              </div>
+            )}
+          </motion.div>
+        {/* 2: Procurement Optimization */}
+        <motion.div 
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.2 }}
+            className={`${styles.surfaceCard} ${styles.card}`}
+          >
+            <div className={styles.cardHeader}>
+              <TrendingUp size={20} color="var(--md-sys-color-tertiary)" />
+              <h2>Adaptive Procurement Optimization</h2>
+            </div>
+            
+            {loading && !procurementData ? <WireframeLoader /> : (
+              <div className={styles.gridTable}>
+                <div className={`${styles.gridRow} ${styles.gridHeader}`}>
+                  <span>Target Source</span>
+                  <span>Arrival</span>
+                  <span>Landed Price</span>
+                  <span>Algorithmic Score</span>
+                </div>
+                {procurementData?.substitutes.map((sub: any, idx: number) => (
+                  <motion.div 
+                    key={sub.source_id}
+                    className={styles.gridRow}
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.3 + (idx * 0.1) }}
+                  >
+                    <span className={styles.gridCell}>{sub.source_name}</span>
+                    <span className={styles.gridCell}>{sub.estimated_replacement_arrival_days}d</span>
+                    <span className={styles.gridCell}>${(sub.current_spot_price_usd + sub.freight_cost_per_bbl).toFixed(2)}</span>
+                    <span className={styles.gridCell}>{sub.procurement_score}</span>
+                  </motion.div>
+                ))}
+              </div>
+            )}
+          </motion.div>
+
+          <motion.div 
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.3 }}
+            className={`${styles.surfaceCard} ${styles.card}`}
+          >
+            <div className={styles.cardHeader}>
+              <Zap size={20} color="var(--md-sys-color-error)" />
+              <h2>Strategic Reserve Drawdown</h2>
+            </div>
+            
+            {loading && !reserveData ? <WireframeLoader /> : (
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', color: "var(--md-sys-color-on-surface-variant)", marginBottom: "1.5rem", gap: '1rem' }}>
+                  <span style={{ flex: 1 }}><strong>Total Release Required:</strong> {reserveData?.total_drawn_m3.toLocaleString()}&nbsp;m³</span>
+                  <span style={{ flexShrink: 0, color: reserveData?.fully_covered ? 'var(--md-sys-color-tertiary)' : 'var(--md-sys-color-error)' }}>
+                    {reserveData?.fully_covered ? "100% Covered" : "Shortfall Detected"}
+                  </span>
+                </div>
+                <div className={styles.schedule}>
+                  {reserveData?.schedule?.slice(0, 5).map((s: any, idx: number) => (
+                    <motion.div 
+                      key={s.day} 
+                      className={styles.scheduleBar}
+                      initial={{ opacity: 0, scaleX: 0 }}
+                      animate={{ opacity: 1, scaleX: 1 }}
+                      transition={{ delay: 0.4 + (idx * 0.1) }}
+                      style={{ display: 'flex', alignItems: 'center', transformOrigin: "left", marginBottom: '0.5rem' }}
+                    >
+                      <span className={styles.day} style={{ flexShrink: 0, width: '45px' }}>Day {s.day}</span>
+                      <div className={styles.barWrap} style={{ flexGrow: 1, margin: '0 1rem' }}>
+                        <div 
+                          className={styles.bar} 
+                          style={{ width: `${(s.volume_m3 / reserveData.schedule[0].volume_m3) * 100}%` }}
+                        />
+                      </div>
+                      <span className={styles.vol} style={{ flexShrink: 0, width: '40px', textAlign: 'right' }}>{Math.round(s.volume_m3 / 1000)}k</span>
+                    </motion.div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </motion.div>
+        {/* End Grid */}
+      </div>
+    </div>
+  );
+}
