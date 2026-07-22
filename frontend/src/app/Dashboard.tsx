@@ -309,14 +309,14 @@ export default function Dashboard() {
                   </div>
                   
                   <div className={styles.schedule}>
-                    {reserveData?.schedule.map((s: any, idx: number) => (
+                    {reserveData?.schedule?.slice(0, 5).map((s: any, idx: number) => (
                       <motion.div 
                         key={s.day}
                         className={styles.scheduleBar}
                         initial={{ opacity: 0, scaleX: 0 }}
                         animate={{ opacity: 1, scaleX: 1 }}
                         transition={{ delay: 0.4 + (idx * 0.1), duration: 0.5, ease: "easeOut" }}
-                        style={{ originX: 0 }}
+                        style={{ display: 'flex', alignItems: 'center', transformOrigin: 'left', marginBottom: '0.5rem', originX: 0 }}
                       >
                         <span className={styles.day} style={{ flexShrink: 0, width: '45px' }}>Day {s.day}</span>
                         <div className={styles.barWrap} style={{ flexGrow: 1, margin: '0 1rem' }}>
