@@ -128,16 +128,29 @@
   gap: 2rem;
 }
 
-/* Glassmorphic Card */
 .card {
   padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
 }
 
 .cardHeader {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 0.75rem;
   margin-bottom: 2rem;
+}
+
+.cardHeaderIcon {
+  margin-top: 0.25rem;
+  flex-shrink: 0;
+}
+
+.cardHeaderTexts {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
 }
 
 .cardHeader h2 {
@@ -148,14 +161,34 @@
   line-height: var(--md-typescale-title-medium-line-height);
   letter-spacing: var(--md-typescale-title-medium-letter-spacing);
   color: var(--md-sys-color-on-surface);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.cardHeader p {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--md-sys-color-on-surface-variant);
+  opacity: 0.8;
+  line-height: 1.3;
 }
 
 /* Cinematic MD3 Surface Container */
 .surfaceCard {
-  background: var(--md-sys-color-surface-container);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+  background: rgba(20, 22, 28, 0.45);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
   border-radius: 16px;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.surfaceCard:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+  border-color: rgba(255, 255, 255, 0.15);
 }
 
 /* Wireframe Loader */
@@ -327,8 +360,83 @@
   gap: 0.75rem;
   border: 1px solid var(--md-sys-color-error);
   position: absolute;
-  top: 80px;
+  top: 130px;
   left: 0;
   right: 0;
   z-index: 1000;
+}
+
+/* AI Summary Banner */
+.aiBanner {
+  position: absolute;
+  top: 85px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 90%;
+  max-width: 900px;
+  padding: 0.75rem 1.5rem;
+  border-radius: 100px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  z-index: 50;
+  font-weight: 500;
+  font-size: 0.95rem;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+  text-align: center;
+  border: 1px solid rgba(255,255,255,0.1);
+}
+
+.aiBanner.stable {
+  background: rgba(16, 185, 129, 0.15);
+  color: #10b981;
+  border-color: rgba(16, 185, 129, 0.3);
+}
+
+.aiBanner.crisis {
+  background: rgba(255, 180, 171, 0.15);
+  color: var(--md-sys-color-error);
+  border-color: rgba(255, 180, 171, 0.3);
+}
+
+.tooltipContainer {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  cursor: help;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.tooltipContainer:hover {
+  color: var(--md-sys-color-primary);
+}
+
+.tooltipContainer .tooltipText {
+  visibility: hidden;
+  width: 220px;
+  background-color: var(--md-sys-color-surface-container-high);
+  color: var(--md-sys-color-on-surface);
+  text-align: center;
+  border-radius: 6px;
+  padding: 0.5rem;
+  position: absolute;
+  z-index: 1;
+  bottom: 125%;
+  left: 50%;
+  margin-left: -110px;
+  opacity: 0;
+  transition: opacity 0.3s;
+  font-size: 0.75rem;
+  font-weight: 400;
+  text-transform: none;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+  border: 1px solid rgba(255,255,255,0.1);
+}
+
+.tooltipContainer:hover .tooltipText {
+  visibility: visible;
+  opacity: 1;
 }

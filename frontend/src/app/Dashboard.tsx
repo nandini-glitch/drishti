@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Activity, ShieldAlert, Zap, RefreshCcw, TrendingUp } from "lucide-react";
+import { Activity, ShieldAlert, Zap, RefreshCcw, TrendingUp, Info, AlertTriangle, CheckCircle } from "lucide-react";
 import styles from "./Dashboard.module.css";
 import MapWrapper from "../components/MapWrapper";
 import RiskTimeline from "../components/RiskTimeline";
@@ -31,6 +31,13 @@ const DrishtiLogo = ({ className = "", size = 28, color = "currentColor" }) => (
     <circle cx="12" cy="12" r="3" fill={color} fillOpacity="0.2" />
     <circle cx="12" cy="12" r="1.5" fill={color} />
   </svg>
+);
+
+const Tooltip = ({ text }: { text: string }) => (
+  <span className={styles.tooltipContainer}>
+    <Info size={14} style={{ marginLeft: '4px', verticalAlign: 'middle' }} />
+    <span className={styles.tooltipText}>{text}</span>
+  </span>
 );
 
 const WireframeLoader = () => (
@@ -107,14 +114,30 @@ export default function Dashboard() {
         </div>
         
         <nav className={styles.navLinks}>
-          <span className={`${styles.navLink} ${styles.active}`}>Live Operations</span>
-          <span className={styles.navLink} onClick={() => setTimelineOpen(!timelineOpen)} style={{ cursor: 'pointer' }}>Intelligence Feed</span>
         </nav>
         <button onClick={fetchDashboardData} disabled={loading}>
           <RefreshCcw size={18} className={loading ? "animate-spin" : ""} />
           {loading ? "Analyzing..." : "Refresh Signals"}
         </button>
       </header>
+
+      {/* AI Summary Banner */}
+      <AnimatePresence>
+        {!loading && scenarioData && (
+          <motion.div 
+            initial={{ y: -20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            className={`${styles.aiBanner} ${isCrisis ? styles.crisis : styles.stable}`}
+          >
+            {isCrisis ? <AlertTriangle size={18} /> : <CheckCircle size={18} />}
+            <span>
+              {isCrisis 
+                ? "CRITICAL ALERT: Severe disruption in the Strait of Hormuz. Global crude supply is restricted, triggering immediate fuel price spikes and GDP drag."
+                : "Global energy transit corridors are stable. No active supply chain disruptions detected."}
+            </span>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Hero Map Section */}
       <div className={styles.heroSection}>
@@ -131,19 +154,23 @@ export default function Dashboard() {
             transition={{ delay: 0.1 }}
             className={`${styles.surfaceCard} ${styles.card}`}
           >
+          >
             <div className={styles.cardHeader}>
-              <Activity size={20} color="var(--md-sys-color-primary)" />
-              <h2>Macroeconomic Impact</h2>
+              <Activity size={24} color="var(--md-sys-color-primary)" className={styles.cardHeaderIcon} />
+              <div className={styles.cardHeaderTexts}>
+                <h2>Global Economic Impact</h2>
+                <p>Estimated real-world consequences of the current supply disruption.</p>
+              </div>
             </div>
             
             {loading && !scenarioData ? <WireframeLoader /> : (
               <div className={styles.stats} style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', gap: '1rem' }}>
                 <div className={styles.statBox} style={{ flex: 1 }}>
-                  <span style={{ whiteSpace: 'nowrap' }}>Disruption Score</span>
+                  <span style={{ whiteSpace: 'nowrap' }}>Supply Chain Risk <Tooltip text="Probability of a sustained global supply shortage based on real-time news and AIS vessel tracking." /></span>
                   <strong className={isCrisis ? styles.spikeIndicator : ""}>{disruptionScore}%</strong>
                 </div>
                 <div className={styles.statBox} style={{ flex: 1 }}>
-                  <span style={{ whiteSpace: 'nowrap' }}>Fuel Price Spike</span>
+                  <span style={{ whiteSpace: 'nowrap' }}>Est. Fuel Price Spike</span>
                   <strong className={isCrisis ? styles.spikeIndicator : ""}>
                     +{scenarioData?.economic_impact_30_days?.fuel_price_spike_pct}%
                   </strong>
@@ -164,9 +191,13 @@ export default function Dashboard() {
             transition={{ delay: 0.2 }}
             className={`${styles.surfaceCard} ${styles.card}`}
           >
+          >
             <div className={styles.cardHeader}>
-              <TrendingUp size={20} color="var(--md-sys-color-tertiary)" />
-              <h2>Adaptive Procurement Optimization</h2>
+              <TrendingUp size={24} color="var(--md-sys-color-tertiary)" className={styles.cardHeaderIcon} />
+              <div className={styles.cardHeaderTexts}>
+                <h2>Alternative Supply Routes</h2>
+                <p>AI-recommended global sources to replace the restricted oil supply.</p>
+              </div>
             </div>
             
             {loading && !procurementData ? <WireframeLoader /> : (
@@ -174,8 +205,8 @@ export default function Dashboard() {
                 <div className={`${styles.gridRow} ${styles.gridHeader}`}>
                   <span>Target Source</span>
                   <span>Arrival</span>
-                  <span>Landed Price</span>
-                  <span>Algorithmic Score</span>
+                  <span>Landed Price <Tooltip text="Total estimated cost per barrel including spot price and shipping freight." /></span>
+                  <span>AI Match Score <Tooltip text="A composite score (out of 100) balancing chemical compatibility, arrival speed, and cost." /></span>
                 </div>
                 {procurementData?.substitutes.map((sub: any, idx: number) => (
                   <motion.div 
@@ -201,15 +232,22 @@ export default function Dashboard() {
             transition={{ delay: 0.3 }}
             className={`${styles.surfaceCard} ${styles.card}`}
           >
+          >
             <div className={styles.cardHeader}>
-              <Zap size={20} color="var(--md-sys-color-error)" />
-              <h2>Strategic Reserve Drawdown</h2>
+              <Zap size={24} color="var(--md-sys-color-error)" className={styles.cardHeaderIcon} />
+              <div className={styles.cardHeaderTexts}>
+                <h2>Emergency Reserve Release</h2>
+                <p>Required release from national strategic reserves to prevent a domestic shortage.</p>
+              </div>
             </div>
             
             {loading && !reserveData ? <WireframeLoader /> : (
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', color: "var(--md-sys-color-on-surface-variant)", marginBottom: "1.5rem", gap: '1rem' }}>
-                  <span style={{ flex: 1 }}><strong>Total Release Required:</strong> {reserveData?.total_drawn_m3.toLocaleString()}&nbsp;m³</span>
+                  <span style={{ flex: 1, fontSize: '1.1rem' }}>
+                    <strong>Total Release Required:</strong> <br/>
+                    <span style={{ color: '#fff', fontSize: '1.4rem' }}>{(reserveData?.total_drawn_m3 * 6.2898 / 1000000).toFixed(2)} Million Barrels</span>
+                  </span>
                   <span style={{ flexShrink: 0, color: reserveData?.fully_covered ? 'var(--md-sys-color-tertiary)' : 'var(--md-sys-color-error)' }}>
                     {reserveData?.fully_covered ? "100% Covered" : "Shortfall Detected"}
                   </span>
@@ -231,7 +269,9 @@ export default function Dashboard() {
                           style={{ width: `${(s.volume_m3 / reserveData.schedule[0].volume_m3) * 100}%` }}
                         />
                       </div>
-                      <span className={styles.vol} style={{ flexShrink: 0, width: '40px', textAlign: 'right' }}>{Math.round(s.volume_m3 / 1000)}k</span>
+                      <span className={styles.vol} style={{ flexShrink: 0, width: '60px', textAlign: 'right' }}>
+                        {Math.round((s.volume_m3 * 6.2898) / 1000)}k bbl
+                      </span>
                     </motion.div>
                   ))}
                 </div>
