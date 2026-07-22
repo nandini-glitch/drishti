@@ -150,6 +150,8 @@ export default function Dashboard() {
         </div>
         
         <nav className={styles.navLinks}>
+          <span className={`${styles.navLink} ${styles.active}`}>Live Operations</span>
+          <span className={styles.navLink} onClick={() => setTimelineOpen(!timelineOpen)} style={{ cursor: 'pointer' }}>Intelligence Feed</span>
         </nav>
         <button onClick={fetchDashboardData} disabled={loading}>
           <RefreshCcw size={18} className={loading ? "animate-spin" : ""} />
