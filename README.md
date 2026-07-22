@@ -1,5 +1,7 @@
 # Drishti: AI-Driven Supply Chain Resilience
 
+**🔴 Live Demo:** [https://drishti-navy.vercel.app/](https://drishti-navy.vercel.app/)
+
 **Drishti** (Sanskrit for "Vision") is an AI-powered supply chain digital twin and predictive risk orchestration platform. It continuously ingests global geopolitical intelligence to anticipate supply chain shocks before they cascade into critical disruptions.
 
 ![Drishti Dashboard](https://raw.githubusercontent.com/lucide-icons/lucide/main/icons/eye.svg)
