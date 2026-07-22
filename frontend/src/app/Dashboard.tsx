@@ -242,28 +242,36 @@ export default function Dashboard() {
             </div>
             
             {loading && !procurementData ? <WireframeLoader /> : (
-              <div className={styles.gridTable}>
-                <div className={`${styles.gridRow} ${styles.gridHeader}`}>
-                  <span>Target Source</span>
-                  <span>Arrival</span>
-                  <span>Landed Price <Tooltip text="Total estimated cost per barrel including spot price and shipping freight." /></span>
-                  <span>AI Match Score <Tooltip text="A composite score (out of 100) balancing chemical compatibility, arrival speed, and cost." /></span>
+              !isCrisis ? (
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--md-sys-color-on-surface-variant)', textAlign: 'center', padding: '2rem' }}>
+                  <CheckCircle size={32} style={{ marginBottom: '1rem', color: '#10b981', opacity: 0.8 }} />
+                  <p>Primary supply routes are fully operational.</p>
+                  <p style={{ fontSize: '0.85rem', opacity: 0.7, marginTop: '0.5rem' }}>No alternative procurement required at this time.</p>
                 </div>
-                {procurementData?.substitutes.map((sub: any, idx: number) => (
-                  <motion.div 
-                    key={sub.source_id}
-                    className={styles.gridRow}
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.3 + (idx * 0.1) }}
-                  >
-                    <span className={styles.gridCell}>{sub.source_name}</span>
-                    <span className={styles.gridCell}>{sub.estimated_replacement_arrival_days}d</span>
-                    <span className={styles.gridCell}>${(sub.current_spot_price_usd + sub.freight_cost_per_bbl).toFixed(2)}</span>
-                    <span className={styles.gridCell}>{sub.procurement_score}</span>
-                  </motion.div>
-                ))}
-              </div>
+              ) : (
+                <div className={styles.gridTable}>
+                  <div className={`${styles.gridRow} ${styles.gridHeader}`}>
+                    <span>Target Source</span>
+                    <span>Arrival</span>
+                    <span>Landed Price <Tooltip text="Total estimated cost per barrel including spot price and shipping freight." /></span>
+                    <span>AI Match Score <Tooltip text="A composite score (out of 100) balancing chemical compatibility, arrival speed, and cost." /></span>
+                  </div>
+                  {procurementData?.substitutes.map((sub: any, idx: number) => (
+                    <motion.div 
+                      key={sub.source_id}
+                      className={styles.gridRow}
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.3 + (idx * 0.1) }}
+                    >
+                      <span className={styles.gridCell}>{sub.source_name}</span>
+                      <span className={styles.gridCell}>{sub.estimated_replacement_arrival_days}d</span>
+                      <span className={styles.gridCell}>${(sub.current_spot_price_usd + sub.freight_cost_per_bbl).toFixed(2)}</span>
+                      <span className={styles.gridCell}>{sub.procurement_score}</span>
+                    </motion.div>
+                  ))}
+                </div>
+              )
             )}
           </motion.div>
 
@@ -282,40 +290,49 @@ export default function Dashboard() {
             </div>
             
             {loading && !reserveData ? <WireframeLoader /> : (
-              <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', color: "var(--md-sys-color-on-surface-variant)", marginBottom: "1.5rem", gap: '1rem' }}>
-                  <span style={{ flex: 1, fontSize: '1.1rem' }}>
-                    <strong>Total Release Required:</strong> <br/>
-                    <span style={{ color: '#fff', fontSize: '1.4rem' }}>{(reserveData?.total_drawn_m3 * 6.2898 / 1000000).toFixed(2)} Million Barrels</span>
-                  </span>
-                  <span style={{ flexShrink: 0, color: reserveData?.fully_covered ? 'var(--md-sys-color-tertiary)' : 'var(--md-sys-color-error)' }}>
-                    {reserveData?.fully_covered ? "100% Covered" : "Shortfall Detected"}
-                  </span>
+              !isCrisis ? (
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--md-sys-color-on-surface-variant)', textAlign: 'center', padding: '2rem' }}>
+                  <CheckCircle size={32} style={{ marginBottom: '1rem', color: '#10b981', opacity: 0.8 }} />
+                  <p>National reserves remain at standard capacity.</p>
+                  <p style={{ fontSize: '0.85rem', opacity: 0.7, marginTop: '0.5rem' }}>No emergency drawdown required.</p>
                 </div>
-                <div className={styles.schedule}>
-                  {reserveData?.schedule?.slice(0, 5).map((s: any, idx: number) => (
-                    <motion.div 
-                      key={s.day} 
-                      className={styles.scheduleBar}
-                      initial={{ opacity: 0, scaleX: 0 }}
-                      animate={{ opacity: 1, scaleX: 1 }}
-                      transition={{ delay: 0.4 + (idx * 0.1) }}
-                      style={{ display: 'flex', alignItems: 'center', transformOrigin: "left", marginBottom: '0.5rem' }}
-                    >
-                      <span className={styles.day} style={{ flexShrink: 0, width: '45px' }}>Day {s.day}</span>
-                      <div className={styles.barWrap} style={{ flexGrow: 1, margin: '0 1rem' }}>
-                        <div 
-                          className={styles.bar} 
-                          style={{ width: `${(s.volume_m3 / reserveData.schedule[0].volume_m3) * 100}%` }}
-                        />
-                      </div>
-                      <span className={styles.vol} style={{ flexShrink: 0, width: '60px', textAlign: 'right' }}>
-                        {Math.round((s.volume_m3 * 6.2898) / 1000)}k bbl
-                      </span>
-                    </motion.div>
-                  ))}
+              ) : (
+                <div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', color: "var(--md-sys-color-on-surface-variant)", marginBottom: "1.5rem", gap: '1rem' }}>
+                    <span style={{ flex: 1, fontSize: '1.1rem' }}>
+                      <strong>Total Release Required:</strong> <br/>
+                      <span style={{ color: '#fff', fontSize: '1.4rem' }}>{(reserveData?.total_drawn_m3 * 6.2898 / 1000000).toFixed(2)} Million Barrels</span>
+                    </span>
+                    <span style={{ flexShrink: 0, color: reserveData?.fully_covered ? 'var(--md-sys-color-tertiary)' : 'var(--md-sys-color-error)' }}>
+                      {reserveData?.fully_covered ? "100% Covered" : "Shortfall Detected"}
+                    </span>
+                  </div>
+                  
+                  <div className={styles.schedule}>
+                    {reserveData?.schedule.map((s: any, idx: number) => (
+                      <motion.div 
+                        key={s.day}
+                        className={styles.scheduleBar}
+                        initial={{ opacity: 0, scaleX: 0 }}
+                        animate={{ opacity: 1, scaleX: 1 }}
+                        transition={{ delay: 0.4 + (idx * 0.1), duration: 0.5, ease: "easeOut" }}
+                        style={{ originX: 0 }}
+                      >
+                        <span className={styles.day} style={{ flexShrink: 0, width: '45px' }}>Day {s.day}</span>
+                        <div className={styles.barWrap} style={{ flexGrow: 1, margin: '0 1rem' }}>
+                          <div 
+                            className={styles.bar} 
+                            style={{ width: `${(s.volume_m3 / reserveData.schedule[0].volume_m3) * 100}%` }}
+                          />
+                        </div>
+                        <span className={styles.vol} style={{ flexShrink: 0, width: '60px', textAlign: 'right' }}>
+                          {Math.round((s.volume_m3 * 6.2898) / 1000)}k bbl
+                        </span>
+                      </motion.div>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )
             )}
           </motion.div>
         {/* End Grid */}
