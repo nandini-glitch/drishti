@@ -5,8 +5,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { X, Play, Activity, AlertTriangle, Target, Clock } from "lucide-react";
 import { useRiskHistory } from "../hooks/useRiskHistory";
 
-export default function RiskTimeline({ isOpen, onClose }: { isOpen: boolean, onClose: () => void }) {
-  const { data: history, metadata, loading, loadMore } = useRiskHistory("hormuz");
+export default function RiskTimeline({ isOpen, onClose, activeCorridor = "hormuz" }: { isOpen: boolean, onClose: () => void, activeCorridor?: string }) {
+  const { data: history, metadata, loading, loadMore } = useRiskHistory(activeCorridor);
   const [simulating, setSimulating] = useState(false);
   const [syncing, setSyncing] = useState(false);
 

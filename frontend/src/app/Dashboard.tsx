@@ -86,6 +86,7 @@ const TrendGraph = ({ spikePct, isCrisis }: { spikePct: number, isCrisis: boolea
 };
 
 export default function Dashboard() {
+  const [activeCorridor, setActiveCorridor] = useState("hormuz");
   const [scenarioData, setScenarioData] = useState<any>(null);
   const [procurementData, setProcurementData] = useState<any>(null);
   const [reserveData, setReserveData] = useState<any>(null);
@@ -94,30 +95,33 @@ export default function Dashboard() {
   const [error, setError] = useState("");
   const [timelineOpen, setTimelineOpen] = useState(false);
 
-  const corridor = "hormuz";
   const API_BASE = process.env.NEXT_PUBLIC_API_URL || "https://drishti-on9a.onrender.com";
 
   const fetchDashboardData = async () => {
     setLoading(true);
-    setError("");
     try {
-      const headers = { "Content-Type": "application/json" };
-      const body = JSON.stringify({ corridor });
+      const [corrRes, scenRes, procRes, resRes] = await Promise.all([
+        fetch(`${API_BASE}/risk/corridors`),
+        fetch(`${API_BASE}/scenario/quick`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ corridor: activeCorridor })
+        }),
+        fetch(`${API_BASE}/procurement/quick`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ corridor: activeCorridor })
+        }),
+        fetch(`${API_BASE}/reserve?corridor=${activeCorridor}`)
+      ]);
 
-      const scenRes = await fetch(`${API_BASE}/scenario/quick`, { method: "POST", headers, body });
-      const procRes = await fetch(`${API_BASE}/procurement/quick`, { method: "POST", headers, body });
-      const resRes = await fetch(`${API_BASE}/reserve?corridor=${corridor}`);
-      const corrRes = await fetch(`${API_BASE}/risk/corridors`);
-
-      if (!scenRes.ok || !procRes.ok || !resRes.ok || !corrRes.ok) {
-        throw new Error("Failed to fetch data from backend. Is it running?");
+      if (corrRes.ok) {
+        const corrData = await corrRes.json();
+        setCorridorsData(corrData.corridors || []);
       }
-
-      setScenarioData(await scenRes.json());
-      setProcurementData(await procRes.json());
-      setReserveData(await resRes.json());
-      const corrData = await corrRes.json();
-      setCorridorsData(corrData.corridors || []);
+      if (scenRes.ok) setScenarioData(await scenRes.json()); else setScenarioData(null);
+      if (procRes.ok) setProcurementData(await procRes.json()); else setProcurementData(null);
+      if (resRes.ok) setReserveData(await resRes.json()); else setReserveData(null);
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -127,7 +131,9 @@ export default function Dashboard() {
 
   useEffect(() => {
     fetchDashboardData();
-  }, []);
+    const interval = setInterval(fetchDashboardData, 10000);
+    return () => clearInterval(interval);
+  }, [activeCorridor]);
 
   const disruptionScore = scenarioData ? (scenarioData.disruption_score * 100).toFixed(1) : 0;
   const isCrisis = scenarioData && scenarioData.disruption_score > 0.3;
@@ -140,7 +146,7 @@ export default function Dashboard() {
         </motion.div>
       )}
 
-      <RiskTimeline isOpen={timelineOpen} onClose={() => setTimelineOpen(false)} />
+      <RiskTimeline isOpen={timelineOpen} onClose={() => setTimelineOpen(false)} activeCorridor={activeCorridor} />
 
       {/* Header Navbar */}
       <header className={styles.header}>
@@ -149,10 +155,29 @@ export default function Dashboard() {
           <h1>Drishti</h1>
         </div>
         
-        <nav className={styles.navLinks}>
+        <div className={styles.navLinks}>
           <span className={`${styles.navLink} ${styles.active}`}>Live Operations</span>
           <span className={styles.navLink} onClick={() => setTimelineOpen(!timelineOpen)} style={{ cursor: 'pointer' }}>Intelligence Feed</span>
-        </nav>
+          <select 
+            value={activeCorridor} 
+            onChange={(e) => setActiveCorridor(e.target.value)}
+            style={{
+              background: 'transparent',
+              color: 'var(--md-sys-color-primary)',
+              border: '1px solid var(--md-sys-color-primary)',
+              padding: '0.5rem',
+              borderRadius: '8px',
+              outline: 'none',
+              cursor: 'pointer'
+            }}
+          >
+            {corridorsData.map((c: any) => (
+              <option key={c.corridor_id} value={c.corridor_id} style={{ background: '#000' }}>
+                {c.corridor_name}
+              </option>
+            ))}
+          </select>
+        </div>
         <button onClick={fetchDashboardData} disabled={loading}>
           <RefreshCcw size={18} className={loading ? "animate-spin" : ""} />
           {loading ? "Analyzing..." : "Refresh Signals"}

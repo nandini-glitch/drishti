@@ -4,7 +4,18 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from src.routes import ingest, risk, actions, twin
 
-app = FastAPI(title="Drishti API")
+from contextlib import asynccontextmanager
+from src.tasks.scheduler import start_scheduler, stop_scheduler
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup
+    start_scheduler()
+    yield
+    # Shutdown
+    stop_scheduler()
+
+app = FastAPI(title="Drishti API", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
